@@ -18,12 +18,12 @@
 
  volatile int g_timer_led = 0;
 
- bool led_timer_callback(repeating_timer_t *rt) {
+ static bool led_timer_callback(repeating_timer_t *rt) {
      g_timer_led = 1;
      return true; // keep repeating
  }
 
- int get_zone(float voltage) {
+ static int get_zone(float voltage) {
      if (voltage < 1.0f)
          return 0;
      if (voltage < 2.0f)
@@ -52,7 +52,6 @@
      repeating_timer_t timer;
      int timer_running = 0;
      int zone_atual = 0;
-     int led_state = 0;
 
      while (1) {
          float voltage = adc_read() * conversion_factor;
@@ -66,11 +65,9 @@
                  timer_running = 0;
              }
              g_timer_led = 0;
-             led_state = 0;
              gpio_put(PIN_LED_B, 0);
 
              if (zone != 0) {
-                 led_state = 1;
                  gpio_put(PIN_LED_B, 1);
                  add_repeating_timer_ms(zone_period_ms[zone], led_timer_callback, NULL, &timer);
                  timer_running = 1;
@@ -79,8 +76,7 @@
 
          if (g_timer_led) {
              g_timer_led = 0;
-             led_state = !led_state;
-             gpio_put(PIN_LED_B, led_state);
+             gpio_put(PIN_LED_B, !gpio_get(PIN_LED_B));
          }
      }
  }
